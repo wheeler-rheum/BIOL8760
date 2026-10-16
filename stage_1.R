@@ -21,6 +21,29 @@ RA1_seurat <- CreateSeuratObject(
   min.features = 200
 )
 
+# Define the timepoints
+RA1_key <- read.delim("~/6_RA1_QC_categories.txt")  
+
+# Pull the donor (RA5, RA6, ...) and timepoint out of the sample column
+RA1_key$donor <- sub("^MB_(RA[0-9]+)_.*", "\\1", RA1_key$sample)
+RA1_key$timepoint <- sub(".*_(Baseline|3w_MTX|6w_MTX|12w_MTX)$", "\\1", RA1_key$sample)
+
+# Keep only confidently assigned, QC-passing singlets
+RA1_key <- subset(RA1_key, pass_QC == TRUE & !hto_demux %in% c("Doublet", "Negative"))
+
+# Build the matching ID: donor + barcode
+RA1_key$cell_id <- paste(RA1_key$donor, RA1_key$barcode, sep = "_")
+
+# Seurat cell names from the merge are "<orig.ident>_<barcode>"
+RA1_seurat$cell_id <- paste(RA1_seurat$orig.ident, sub("^[A-Z0-9]+_", "", colnames(RA1_seurat)), sep = "_")
+
+# Create the timepoint and cell ID columns
+RA1_seurat$timepoint <- RA1_key$timepoint[match(RA1_seurat$cell_id, RA1_key$cell_id)]
+RA1_seurat$hto_call  <- RA1_key$hto_demux[match(RA1_seurat$cell_id, RA1_key$cell_id)]
+
+# Check: most cells should have a timepoint; NAs are cells removed by HTO QC
+table(RA1_seurat$orig.ident, RA1_seurat$timepoint, useNA = "ifany")
+
 # Repeat above steps for RA2
 counts <- Read10X_h5("~/galaxy_inputs/4_RA2_raw_feature_bc_matrix.h5.h5", use.names = TRUE, unique.features = TRUE)
 rna_counts <- counts[["Gene Expression"]]
@@ -30,6 +53,7 @@ RA2_seurat <- CreateSeuratObject(
   min.cells = 3,
   min.features = 200
 )
+
 
 # Repeat above steps for RA4
 counts <- Read10X_h5("~/galaxy_inputs/3_RA4_raw_feature_bc_matrix.h5.h5", use.names = TRUE, unique.features = TRUE)
