@@ -21,18 +21,20 @@ RA1_seurat <- CreateSeuratObject(
   min.features = 200
 )
 
-# Define the timepoints
-RA1_key <- read.delim("~/6_RA1_QC_categories.txt")  
-
-# Pull the donor (RA5, RA6, ...) and timepoint out of the sample column
-RA1_key$donor <- sub("^MB_(RA[0-9]+)_.*", "\\1", RA1_key$sample)
+# Create the correct timepoint definitions
+RA1_key <- read.delim("~/4_RA1_QC_categories.txt") 
 RA1_key$timepoint <- sub(".*_(Baseline|3w_MTX|6w_MTX|12w_MTX)$", "\\1", RA1_key$sample)
+RA1_key$timepoint <- c(Baseline = "BL", "3w_MTX" = "wk3",
+                   "6w_MTX" = "wk6", "12w_MTX" = "wk12")[RA1_key$timepoint]
 
-# Keep only confidently assigned, QC-passing singlets
-RA1_key <- subset(RA1_key, pass_QC == TRUE & !hto_demux %in% c("Doublet", "Negative"))
+# Keep only singlets with a timepoint that pass QC
+# (if pass_QC was read as text, use key$pass_QC == "True")
+RA1_key <- RA1_key[!is.na(RA1_key$timepoint) & RA1_key$pass_QC == "True", ]
+RA1_key$timepoint <- factor(RA1_key$timepoint, levels = c("BL", "wk3", "wk6", "wk12"))
 
-# Build the matching ID: donor + barcode
-RA1_key$cell_id <- paste(RA1_key$donor, RA1_key$barcode, sep = "_")
+table(RA1_key$timepoint, useNA = "ifany")
+table(RA1_key$hto_demux, RA1_key$timepoint)   # hto_demux should agree with timepoint
+
 
 # Seurat cell names from the merge are "<orig.ident>_<barcode>"
 RA1_seurat$cell_id <- paste(RA1_seurat$orig.ident, sub("^[A-Z0-9]+_", "", colnames(RA1_seurat)), sep = "_")
