@@ -281,3 +281,42 @@ print(cluster_annotation)
 # Visualize the annotations on the UMAP
 DimPlot(seu_all, reduction = "umap", group.by = "SingleR_pruned", label = TRUE) +
   ggtitle("SingleR annotations (Monaco reference)")
+
+# Stage 6.	Subsetting into cell lineages
+## 6.i.	Subset into T cells, B cells, and myeloid cells
+t_cells   <- subset(seu_all, subset = SingleR_pruned %in% c("CD4+ T cells", "CD8+ T cells", "T cells"))
+b_cells   <- subset(seu_all, subset = SingleR_pruned %in% c("B cells"))
+myeloid   <- subset(seu_all, subset = SingleR_pruned %in% c("Monocytes", "Dendritic cells"))
+
+## 6.ii.	Integration of each subset across batches to account for variance due to batch effect using anchor-based CCA intregration
+integrate_subset <- function(obj, batch_col = "donor", dims = 1:14) {
+  # Pick variable features once, on the full (unsplit) subset
+  obj <- NormalizeData(obj)
+  obj <- FindVariableFeatures(obj, nfeatures = 2000)
+  hvg <- VariableFeatures(obj)
+
+  # Split by donor after feature selection
+  obj[["RNA"]] <- split(obj[["RNA"]], f = obj[[batch_col, drop = TRUE]])
+
+  # Scale and reduce using the shared feature set
+  obj <- ScaleData(obj, features = hvg)
+  obj <- RunPCA(obj, features = hvg, npcs = max(dims))
+
+  obj <- IntegrateLayers(
+    object = obj,
+    method = CCAIntegration,
+    orig.reduction = "pca",
+    new.reduction = "integrated.cca",
+    dims = dims
+  )
+  obj
+}
+
+t_int <- integrate_subset(t_cells, batch_col = "orig.ident")
+b_int <- integrate_subset(b_cells, batch_col = "orig.ident")
+myeloid_int <- integrate_subset(myeloid, batch_col = "orig.ident")
+
+# Save the integrated objects
+saveRDS(t_int, "t_cells_integrated.rds")
+saveRDS(b_int, "b_cells_integrated.rds")
+saveRDS(myeloid_int, "myeloid_integrated.rds")
