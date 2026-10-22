@@ -187,38 +187,16 @@ RA6_seurat <- subset(
 )
 RA6_seurat
 
-## Step 1.iii.	Normalization with a scale factor of 10,000
-RA1_seurat <- NormalizeData(
-  RA1_seurat,
-  normalization.method = "LogNormalize",
-  scale.factor = 10000
-)
-RA2_seurat <- NormalizeData(
-  RA2_seurat,
-  normalization.method = "LogNormalize",
-  scale.factor = 10000
-)
-RA4_seurat <- NormalizeData(
-  RA4_seurat,
-  normalization.method = "LogNormalize",
-  scale.factor = 10000
-)
-RA5_seurat <- NormalizeData(
-  RA5_seurat,
-  normalization.method = "LogNormalize",
-  scale.factor = 10000
-)
-RA6_seurat <- NormalizeData(
-  RA6_seurat,
-  normalization.method = "LogNormalize",
-  scale.factor = 10000
-)
-
-## Before Step 2: merge the individuals patients into one file
+## Before Normalization: merge the individuals patients into one file
 objs <- list(RA1 = RA1_seurat, RA2 = RA2_seurat, RA4 = RA4_seurat,
              RA5 = RA5_seurat, RA6 = RA6_seurat)
 for (d in names(objs)) objs[[d]]$donor <- d
 seu_all <- merge(objs[[1]], y = objs[-1], add.cell.ids = names(objs))
 seu_all[["RNA"]] <- JoinLayers(seu_all[["RNA"]])
 
-
+## Step 1.iii.	Normalization with a scale factor of 10,000
+seu_all <- NormalizeData(
+  seu_all,
+  normalization.method = "LogNormalize",
+  scale.factor = 10000
+)
