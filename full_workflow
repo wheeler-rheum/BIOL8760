@@ -226,3 +226,16 @@ seu_all <- FindClusters(
   algorithm = 1
 )
 table(Idents(seu_all))
+
+# Stage 4. Construct Uniform Manifold Approximation and Projection (UMAP) and identify per-cluster marker genes
+## Stage 4.i.	Construct UMAP for data reduction based on first 14 dimensions
+# Construct UMAP using the first 14 principal components
+seu_all <- RunUMAP(seu_all, dims = 1:14)
+
+# Visualize the UMAP, colored by cluster
+DimPlot(seu_all, reduction = "umap", label = TRUE)
+
+## Stage 4.ii.	Identify marker genes for every cluster
+# Identify marker genes for every cluster
+seu_all <- JoinLayers(seu_all)
+markers <- FindAllMarkers(seu_all)
