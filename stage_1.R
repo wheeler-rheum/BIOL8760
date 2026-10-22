@@ -22,32 +22,31 @@ RA1_seurat <- CreateSeuratObject(
 )
 
 # Create the correct timepoint definitions
-RA1_key <- read.delim("~/galaxy_input/7_RA1_QC_categories.txt.tabular") 
+RA1_key <- read.delim("~/galaxy_inputs/7_RA1_QC_categories.txt.tabular") 
 RA1_key$timepoint <- sub(".*_(Baseline|3w_MTX|6w_MTX|12w_MTX)$", "\\1", RA1_key$sample)
 RA1_key$timepoint <- c(Baseline = "BL", "3w_MTX" = "wk3",
-                   "6w_MTX" = "wk6", "12w_MTX" = "wk12")[RA1_key$timepoint]
+                       "6w_MTX" = "wk6", "12w_MTX" = "wk12")[RA1_key$timepoint]
 
 # Keep only singlets with a timepoint that pass QC
-# (if pass_QC was read as text, use key$pass_QC == "True")
 RA1_key <- RA1_key[!is.na(RA1_key$timepoint) & RA1_key$pass_QC == "True", ]
+
+# Create the timepoint variable
 RA1_key$timepoint <- factor(RA1_key$timepoint, levels = c("BL", "wk3", "wk6", "wk12"))
 
+# Double check the numbers
 table(RA1_key$timepoint, useNA = "ifany")
 table(RA1_key$hto_demux, RA1_key$timepoint)   # hto_demux should agree with timepoint
 
+# Merge the key to the seurat object to define the timepoints
+m <- match(colnames(RA1_seurat), RA1_key$barcode)
+RA1_seurat$timepoint <- RA1_key$timepoint[m]
+RA1_seurat <- subset(RA1_seurat, cells = colnames(RA1_seurat)[!is.na(RA1_seurat$timepoint)])
 
-# Seurat cell names from the merge are "<orig.ident>_<barcode>"
-RA1_seurat$cell_id <- paste(RA1_seurat$orig.ident, sub("^[A-Z0-9]+_", "", colnames(RA1_seurat)), sep = "_")
+table(RA1_seurat$timepoint, useNA = "ifany")
 
-# Create the timepoint and cell ID columns
-RA1_seurat$timepoint <- RA1_key$timepoint[match(RA1_seurat$cell_id, RA1_key$cell_id)]
-RA1_seurat$hto_call  <- RA1_key$hto_demux[match(RA1_seurat$cell_id, RA1_key$cell_id)]
-
-# Check: most cells should have a timepoint; NAs are cells removed by HTO QC
-table(RA1_seurat$orig.ident, RA1_seurat$timepoint, useNA = "ifany")
 
 # Repeat above steps for RA2
-counts <- Read10X_h5("~/galaxy_inputs/4_RA2_raw_feature_bc_matrix.h5.h5", use.names = TRUE, unique.features = TRUE)
+counts <- Read10X_h5("~/galaxy_inputs/2_RA2_raw_feature_bc_matrix.h5.h5", use.names = TRUE, unique.features = TRUE)
 rna_counts <- counts[["Gene Expression"]]
 RA2_seurat <- CreateSeuratObject(
   counts = rna_counts,
@@ -55,7 +54,18 @@ RA2_seurat <- CreateSeuratObject(
   min.cells = 3,
   min.features = 200
 )
-
+RA2_key <- read.delim("~/galaxy_inputs/9_RA2_QC_categories.txt.tabular") 
+RA2_key$timepoint <- sub(".*_(Baseline|3w_MTX|6w_MTX|12w_MTX)$", "\\1", RA2_key$sample)
+RA2_key$timepoint <- c(Baseline = "BL", "3w_MTX" = "wk3",
+                       "6w_MTX" = "wk6", "12w_MTX" = "wk12")[RA2_key$timepoint]
+RA2_key <- RA2_key[!is.na(RA2_key$timepoint) & RA2_key$pass_QC == "True", ]
+RA2_key$timepoint <- factor(RA2_key$timepoint, levels = c("BL", "wk3", "wk6", "wk12"))
+table(RA2_key$timepoint, useNA = "ifany")
+table(RA2_key$hto_demux, RA2_key$timepoint)   # hto_demux should agree with timepoint
+m <- match(colnames(RA2_seurat), RA2_key$barcode)
+RA2_seurat$timepoint <- RA2_key$timepoint[m]
+RA2_seurat <- subset(RA2_seurat, cells = colnames(RA2_seurat)[!is.na(RA2_seurat$timepoint)])
+table(RA2_seurat$timepoint, useNA = "ifany")
 
 # Repeat above steps for RA4
 counts <- Read10X_h5("~/galaxy_inputs/3_RA4_raw_feature_bc_matrix.h5.h5", use.names = TRUE, unique.features = TRUE)
@@ -66,9 +76,21 @@ RA4_seurat <- CreateSeuratObject(
   min.cells = 3,
   min.features = 200
 )
+RA4_key <- read.delim("~/galaxy_inputs/8_RA4_QC_categories.txt.tabular") 
+RA4_key$timepoint <- sub(".*_(Baseline|3w_MTX|6w_MTX|12w_MTX)$", "\\1", RA4_key$sample)
+RA4_key$timepoint <- c(Baseline = "BL", "3w_MTX" = "wk3",
+                       "6w_MTX" = "wk6", "12w_MTX" = "wk12")[RA4_key$timepoint]
+RA4_key <- RA4_key[!is.na(RA4_key$timepoint) & RA4_key$pass_QC == "True", ]
+RA4_key$timepoint <- factor(RA4_key$timepoint, levels = c("BL", "wk3", "wk6", "wk12"))
+table(RA4_key$timepoint, useNA = "ifany")
+table(RA4_key$hto_demux, RA4_key$timepoint)   # hto_demux should agree with timepoint
+m <- match(colnames(RA4_seurat), RA4_key$barcode)
+RA4_seurat$timepoint <- RA4_key$timepoint[m]
+RA4_seurat <- subset(RA4_seurat, cells = colnames(RA4_seurat)[!is.na(RA4_seurat$timepoint)])
+table(RA4_seurat$timepoint, useNA = "ifany")
 
 # Repeat above steps for RA5
-counts <- Read10X_h5("~/galaxy_inputs/2_RA5_raw_feature_bc_matrix.h5.h5", use.names = TRUE, unique.features = TRUE)
+counts <- Read10X_h5("~/galaxy_inputs/4_RA5_raw_feature_bc_matrix.h5.h5", use.names = TRUE, unique.features = TRUE)
 rna_counts <- counts[["Gene Expression"]]
 RA5_seurat <- CreateSeuratObject(
   counts = rna_counts,
@@ -76,9 +98,21 @@ RA5_seurat <- CreateSeuratObject(
   min.cells = 3,
   min.features = 200
 )
+RA5_key <- read.delim("~/galaxy_inputs/10_RA5_QC_categories.txt.tabular") 
+RA5_key$timepoint <- sub(".*_(Baseline|3w_MTX|6w_MTX|12w_MTX)$", "\\1", RA5_key$sample)
+RA5_key$timepoint <- c(Baseline = "BL", "3w_MTX" = "wk3",
+                       "6w_MTX" = "wk6", "12w_MTX" = "wk12")[RA5_key$timepoint]
+RA5_key <- RA5_key[!is.na(RA5_key$timepoint) & RA5_key$pass_QC == "True", ]
+RA5_key$timepoint <- factor(RA5_key$timepoint, levels = c("BL", "wk3", "wk6", "wk12"))
+table(RA5_key$timepoint, useNA = "ifany")
+table(RA5_key$hto_demux, RA5_key$timepoint)   # hto_demux should agree with timepoint
+m <- match(colnames(RA5_seurat), RA5_key$barcode)
+RA5_seurat$timepoint <- RA5_key$timepoint[m]
+RA5_seurat <- subset(RA5_seurat, cells = colnames(RA5_seurat)[!is.na(RA5_seurat$timepoint)])
+table(RA5_seurat$timepoint, useNA = "ifany")
 
 # Repeat above steps for RA6
-counts <- Read10X_h5("~/galaxy_inputs/1_RA6_raw_feature_bc_matrix.h5.h5", use.names = TRUE, unique.features = TRUE)
+counts <- Read10X_h5("~/galaxy_inputs/5_RA6_raw_feature_bc_matrix.h5.h5", use.names = TRUE, unique.features = TRUE)
 rna_counts <- counts[["Gene Expression"]]
 RA6_seurat <- CreateSeuratObject(
   counts = rna_counts,
@@ -86,7 +120,18 @@ RA6_seurat <- CreateSeuratObject(
   min.cells = 3,
   min.features = 200
 )
-
+RA6_key <- read.delim("~/galaxy_inputs/6_RA6_QC_categories.txt.tabular") 
+RA6_key$timepoint <- sub(".*_(Baseline|3w_MTX|6w_MTX|12w_MTX)$", "\\1", RA6_key$sample)
+RA6_key$timepoint <- c(Baseline = "BL", "3w_MTX" = "wk3",
+                       "6w_MTX" = "wk6", "12w_MTX" = "wk12")[RA6_key$timepoint]
+RA6_key <- RA6_key[!is.na(RA6_key$timepoint) & RA6_key$pass_QC == "True", ]
+RA6_key$timepoint <- factor(RA6_key$timepoint, levels = c("BL", "wk3", "wk6", "wk12"))
+table(RA6_key$timepoint, useNA = "ifany")
+table(RA6_key$hto_demux, RA6_key$timepoint)   # hto_demux should agree with timepoint
+m <- match(colnames(RA6_seurat), RA6_key$barcode)
+RA6_seurat$timepoint <- RA6_key$timepoint[m]
+RA6_seurat <- subset(RA6_seurat, cells = colnames(RA6_seurat)[!is.na(RA6_seurat$timepoint)])
+table(RA6_seurat$timepoint, useNA = "ifany")
 
 ## Step 1.ii.	Filtering will be performed to remove cells with <300 features or >10% mitochondrial reads
 # Compute percent mitochondrial reads per cell
