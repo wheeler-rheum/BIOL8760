@@ -1,1 +1,206 @@
+# Install Seurat and hdf5r
+install.packages("Seurat")
+install.packages("hdf5r")
+library("Seurat")
+library("hdf5r")
 
+
+## Step 1.i. Data from each individual will be imported as a Seurat object
+
+# Read in the hd5 file
+counts <- Read10X_h5("~/galaxy_inputs/1_RA1_raw_feature_bc_matrix.h5.h5", use.names = TRUE, unique.features = TRUE)
+
+# Need to limit to the Gene Expression features (there are also antibody counts)
+rna_counts <- counts[["Gene Expression"]]
+
+# Create the Seurat object
+RA1_seurat <- CreateSeuratObject(
+  counts = rna_counts,
+  project = "RA1",
+  min.cells = 3,
+  min.features = 200
+)
+
+# Create the correct timepoint definitions
+RA1_key <- read.delim("~/galaxy_inputs/7_RA1_QC_categories.txt.tabular") 
+RA1_key$timepoint <- sub(".*_(Baseline|3w_MTX|6w_MTX|12w_MTX)$", "\\1", RA1_key$sample)
+RA1_key$timepoint <- c(Baseline = "BL", "3w_MTX" = "wk3",
+                       "6w_MTX" = "wk6", "12w_MTX" = "wk12")[RA1_key$timepoint]
+
+# Keep only singlets with a timepoint that pass QC
+RA1_key <- RA1_key[!is.na(RA1_key$timepoint) & RA1_key$pass_QC == "True", ]
+
+# Create the timepoint variable
+RA1_key$timepoint <- factor(RA1_key$timepoint, levels = c("BL", "wk3", "wk6", "wk12"))
+
+# Double check the numbers
+table(RA1_key$timepoint, useNA = "ifany")
+table(RA1_key$hto_demux, RA1_key$timepoint)   # hto_demux should agree with timepoint
+
+# Merge the key to the seurat object to define the timepoints
+m <- match(colnames(RA1_seurat), RA1_key$barcode)
+RA1_seurat$timepoint <- RA1_key$timepoint[m]
+RA1_seurat <- subset(RA1_seurat, cells = colnames(RA1_seurat)[!is.na(RA1_seurat$timepoint)])
+
+table(RA1_seurat$timepoint, useNA = "ifany")
+
+
+# Repeat above steps for RA2
+counts <- Read10X_h5("~/galaxy_inputs/2_RA2_raw_feature_bc_matrix.h5.h5", use.names = TRUE, unique.features = TRUE)
+rna_counts <- counts[["Gene Expression"]]
+RA2_seurat <- CreateSeuratObject(
+  counts = rna_counts,
+  project = "RA2",
+  min.cells = 3,
+  min.features = 200
+)
+RA2_key <- read.delim("~/galaxy_inputs/9_RA2_QC_categories.txt.tabular") 
+RA2_key$timepoint <- sub(".*_(Baseline|3w_MTX|6w_MTX|12w_MTX)$", "\\1", RA2_key$sample)
+RA2_key$timepoint <- c(Baseline = "BL", "3w_MTX" = "wk3",
+                       "6w_MTX" = "wk6", "12w_MTX" = "wk12")[RA2_key$timepoint]
+RA2_key <- RA2_key[!is.na(RA2_key$timepoint) & RA2_key$pass_QC == "True", ]
+RA2_key$timepoint <- factor(RA2_key$timepoint, levels = c("BL", "wk3", "wk6", "wk12"))
+table(RA2_key$timepoint, useNA = "ifany")
+table(RA2_key$hto_demux, RA2_key$timepoint)   # hto_demux should agree with timepoint
+m <- match(colnames(RA2_seurat), RA2_key$barcode)
+RA2_seurat$timepoint <- RA2_key$timepoint[m]
+RA2_seurat <- subset(RA2_seurat, cells = colnames(RA2_seurat)[!is.na(RA2_seurat$timepoint)])
+table(RA2_seurat$timepoint, useNA = "ifany")
+
+# Repeat above steps for RA4
+counts <- Read10X_h5("~/galaxy_inputs/3_RA4_raw_feature_bc_matrix.h5.h5", use.names = TRUE, unique.features = TRUE)
+rna_counts <- counts[["Gene Expression"]]
+RA4_seurat <- CreateSeuratObject(
+  counts = rna_counts,
+  project = "RA4",
+  min.cells = 3,
+  min.features = 200
+)
+RA4_key <- read.delim("~/galaxy_inputs/8_RA4_QC_categories.txt.tabular") 
+RA4_key$timepoint <- sub(".*_(Baseline|3w_MTX|6w_MTX|12w_MTX)$", "\\1", RA4_key$sample)
+RA4_key$timepoint <- c(Baseline = "BL", "3w_MTX" = "wk3",
+                       "6w_MTX" = "wk6", "12w_MTX" = "wk12")[RA4_key$timepoint]
+RA4_key <- RA4_key[!is.na(RA4_key$timepoint) & RA4_key$pass_QC == "True", ]
+RA4_key$timepoint <- factor(RA4_key$timepoint, levels = c("BL", "wk3", "wk6", "wk12"))
+table(RA4_key$timepoint, useNA = "ifany")
+table(RA4_key$hto_demux, RA4_key$timepoint)   # hto_demux should agree with timepoint
+m <- match(colnames(RA4_seurat), RA4_key$barcode)
+RA4_seurat$timepoint <- RA4_key$timepoint[m]
+RA4_seurat <- subset(RA4_seurat, cells = colnames(RA4_seurat)[!is.na(RA4_seurat$timepoint)])
+table(RA4_seurat$timepoint, useNA = "ifany")
+
+# Repeat above steps for RA5
+counts <- Read10X_h5("~/galaxy_inputs/4_RA5_raw_feature_bc_matrix.h5.h5", use.names = TRUE, unique.features = TRUE)
+rna_counts <- counts[["Gene Expression"]]
+RA5_seurat <- CreateSeuratObject(
+  counts = rna_counts,
+  project = "RA5",
+  min.cells = 3,
+  min.features = 200
+)
+RA5_key <- read.delim("~/galaxy_inputs/10_RA5_QC_categories.txt.tabular") 
+RA5_key$timepoint <- sub(".*_(Baseline|3w_MTX|6w_MTX|12w_MTX)$", "\\1", RA5_key$sample)
+RA5_key$timepoint <- c(Baseline = "BL", "3w_MTX" = "wk3",
+                       "6w_MTX" = "wk6", "12w_MTX" = "wk12")[RA5_key$timepoint]
+RA5_key <- RA5_key[!is.na(RA5_key$timepoint) & RA5_key$pass_QC == "True", ]
+RA5_key$timepoint <- factor(RA5_key$timepoint, levels = c("BL", "wk3", "wk6", "wk12"))
+table(RA5_key$timepoint, useNA = "ifany")
+table(RA5_key$hto_demux, RA5_key$timepoint)   # hto_demux should agree with timepoint
+m <- match(colnames(RA5_seurat), RA5_key$barcode)
+RA5_seurat$timepoint <- RA5_key$timepoint[m]
+RA5_seurat <- subset(RA5_seurat, cells = colnames(RA5_seurat)[!is.na(RA5_seurat$timepoint)])
+table(RA5_seurat$timepoint, useNA = "ifany")
+
+# Repeat above steps for RA6
+counts <- Read10X_h5("~/galaxy_inputs/5_RA6_raw_feature_bc_matrix.h5.h5", use.names = TRUE, unique.features = TRUE)
+rna_counts <- counts[["Gene Expression"]]
+RA6_seurat <- CreateSeuratObject(
+  counts = rna_counts,
+  project = "RA6",
+  min.cells = 3,
+  min.features = 200
+)
+RA6_key <- read.delim("~/galaxy_inputs/6_RA6_QC_categories.txt.tabular") 
+RA6_key$timepoint <- sub(".*_(Baseline|3w_MTX|6w_MTX|12w_MTX)$", "\\1", RA6_key$sample)
+RA6_key$timepoint <- c(Baseline = "BL", "3w_MTX" = "wk3",
+                       "6w_MTX" = "wk6", "12w_MTX" = "wk12")[RA6_key$timepoint]
+RA6_key <- RA6_key[!is.na(RA6_key$timepoint) & RA6_key$pass_QC == "True", ]
+RA6_key$timepoint <- factor(RA6_key$timepoint, levels = c("BL", "wk3", "wk6", "wk12"))
+table(RA6_key$timepoint, useNA = "ifany")
+table(RA6_key$hto_demux, RA6_key$timepoint)   # hto_demux should agree with timepoint
+m <- match(colnames(RA6_seurat), RA6_key$barcode)
+RA6_seurat$timepoint <- RA6_key$timepoint[m]
+RA6_seurat <- subset(RA6_seurat, cells = colnames(RA6_seurat)[!is.na(RA6_seurat$timepoint)])
+table(RA6_seurat$timepoint, useNA = "ifany")
+
+## Step 1.ii.	Filtering will be performed to remove cells with <300 features or >10% mitochondrial reads
+# Compute percent mitochondrial reads per cell
+RA1_seurat[["percent.mt"]] <- PercentageFeatureSet(RA1_seurat, pattern = "^MT-")
+
+# Remove cells with <300 features or >10% mitochondrial reads
+RA1_seurat <- subset(
+  RA1_seurat,
+  subset = nFeature_RNA >= 300 & percent.mt <= 10
+)
+
+# Check how many cells remain
+RA1_seurat
+
+# Repeat for RA2
+RA2_seurat[["percent.mt"]] <- PercentageFeatureSet(RA2_seurat, pattern = "^MT-")
+RA2_seurat <- subset(
+  RA2_seurat,
+  subset = nFeature_RNA >= 300 & percent.mt <= 10
+)
+RA2_seurat
+
+# Repeat for RA4
+RA4_seurat[["percent.mt"]] <- PercentageFeatureSet(RA4_seurat, pattern = "^MT-")
+RA4_seurat <- subset(
+  RA4_seurat,
+  subset = nFeature_RNA >= 300 & percent.mt <= 10
+)
+RA4_seurat
+
+# Repeat for RA5
+RA5_seurat[["percent.mt"]] <- PercentageFeatureSet(RA5_seurat, pattern = "^MT-")
+RA5_seurat <- subset(
+  RA5_seurat,
+  subset = nFeature_RNA >= 300 & percent.mt <= 10
+)
+RA5_seurat
+
+# Repeat for RA6
+RA6_seurat[["percent.mt"]] <- PercentageFeatureSet(RA6_seurat, pattern = "^MT-")
+RA6_seurat <- subset(
+  RA6_seurat,
+  subset = nFeature_RNA >= 300 & percent.mt <= 10
+)
+RA6_seurat
+
+## Step 1.iii.	Normalization with a scale factor of 10,000
+RA1_seurat <- NormalizeData(
+  RA1_seurat,
+  normalization.method = "LogNormalize",
+  scale.factor = 10000
+)
+RA2_seurat <- NormalizeData(
+  RA2_seurat,
+  normalization.method = "LogNormalize",
+  scale.factor = 10000
+)
+RA4_seurat <- NormalizeData(
+  RA4_seurat,
+  normalization.method = "LogNormalize",
+  scale.factor = 10000
+)
+RA5_seurat <- NormalizeData(
+  RA5_seurat,
+  normalization.method = "LogNormalize",
+  scale.factor = 10000
+)
+RA6_seurat <- NormalizeData(
+  RA6_seurat,
+  normalization.method = "LogNormalize",
+  scale.factor = 10000
+)
