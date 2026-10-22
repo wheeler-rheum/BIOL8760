@@ -239,3 +239,45 @@ DimPlot(seu_all, reduction = "umap", label = TRUE)
 # Identify marker genes for every cluster
 seu_all <- JoinLayers(seu_all)
 markers <- FindAllMarkers(seu_all)
+
+# Stage 5. Annotate clusters based on expression of top marker genes with Monaco immune reference dataset as reference
+# Download the Monaco immune reference from celldex
+monaco_ref <- MonacoImmuneData()
+
+# Inspect the available labels (fine-grained and main cell types)
+table(monaco_ref$label.main)
+
+# Extract the expression matrix from the Seurat object
+# JoinLayers() was run previously, so there is a single counts/data layer
+expr_matrix <- GetAssayData(seu_all, assay = "RNA", layer = "data")
+
+# Run SingleR to annotate each cell against the Monaco reference
+# Use label.main for broad cell types; switch to "label.fine" for subtypes
+pred <- SingleR(
+  test = expr_matrix,
+  ref = monaco_ref,
+  labels = monaco_ref$label.main
+)
+
+# Check how many cells received each label and the score distribution
+table(pred$labels)
+summary(pred$pruned.labels == "NA" | is.na(pred$pruned.labels))
+
+# Add the SingleR labels to the Seurat metadata
+seu_all$SingleR_label <- pred$labels
+seu_all$SingleR_pruned <- pred$pruned.labels
+
+# Summarize annotations per cluster (each cluster gets its most frequent label)
+cluster_annotation <- data.frame(
+  cluster = seu_all$seurat_clusters,
+  label = pred$pruned.labels
+) %>%
+  group_by(cluster, label) %>%
+  summarise(n = n(), .groups = "drop") %>%
+  group_by(cluster) %>%
+  slice_max(order_by = n, n = 1)
+print(cluster_annotation)
+
+# Visualize the annotations on the UMAP
+DimPlot(seu_all, reduction = "umap", group.by = "SingleR_pruned", label = TRUE) +
+  ggtitle("SingleR annotations (Monaco reference)")
