@@ -6,6 +6,13 @@ library("hdf5r")
 library(dplyr)
 install.packages('devtools')
 devtools::install_github('immunogenomics/presto')
+install.packages("curl")
+BiocManager::install(c("SingleR", "celldex"))
+library(curl)
+library(SingleR)
+library(celldex)
+library(SummarizedExperiment)
+library(ggplot2)
 
 ## Step 1.i. Data from each individual will be imported as a Seurat object
 
