@@ -202,10 +202,15 @@ seu_all <- NormalizeData(
 )
 
 ### Stage 2: Selection of 2000 most variable features and scaling to construct principal component analysis (PCA)
-
 ## Step 2.i. Select the 2000 most variable features
 seu_all <- FindVariableFeatures(
   seu_all,
   selection.method = "vst",
   nfeatures = 2000
 )
+
+## Step 2.ii.	Scale the data
+seu_all <- ScaleData(seu_all)
+
+## Step 2.iii.	Construct PCA
+seu_all <- RunPCA(seu_all, features = VariableFeatures(object = seu_all))
