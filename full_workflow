@@ -1,9 +1,11 @@
-# Install Seurat and hdf5r
+# Install Programs
 install.packages("Seurat")
 install.packages("hdf5r")
 library("Seurat")
 library("hdf5r")
-
+library(dplyr)
+install.packages('devtools')
+devtools::install_github('immunogenomics/presto')
 
 ## Step 1.i. Data from each individual will be imported as a Seurat object
 
