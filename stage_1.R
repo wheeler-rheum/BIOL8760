@@ -8,7 +8,7 @@ library("hdf5r")
 ## Step 1.i. Data from each individual will be imported as a Seurat object
 
 # Read in the hd5 file
-counts <- Read10X_h5("~/galaxy_inputs/5_RA1_raw_feature_bc_matrix.h5.h5", use.names = TRUE, unique.features = TRUE)
+counts <- Read10X_h5("~/galaxy_inputs/1_RA1_raw_feature_bc_matrix.h5.h5", use.names = TRUE, unique.features = TRUE)
 
 # Need to limit to the Gene Expression features (there are also antibody counts)
 rna_counts <- counts[["Gene Expression"]]
@@ -22,7 +22,7 @@ RA1_seurat <- CreateSeuratObject(
 )
 
 # Create the correct timepoint definitions
-RA1_key <- read.delim("~/4_RA1_QC_categories.txt") 
+RA1_key <- read.delim("~/galaxy_input/7_RA1_QC_categories.txt.tabular") 
 RA1_key$timepoint <- sub(".*_(Baseline|3w_MTX|6w_MTX|12w_MTX)$", "\\1", RA1_key$sample)
 RA1_key$timepoint <- c(Baseline = "BL", "3w_MTX" = "wk3",
                    "6w_MTX" = "wk6", "12w_MTX" = "wk12")[RA1_key$timepoint]
