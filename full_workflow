@@ -214,3 +214,15 @@ seu_all <- ScaleData(seu_all)
 
 ## Step 2.iii.	Construct PCA
 seu_all <- RunPCA(seu_all, features = VariableFeatures(object = seu_all))
+
+## Stage 3: Construct Shared Nearest Neighbor (SNN) graph based on first 14 PCs with Euclidean distance and cluster results
+# Step 3.i.	Construct SNN Graph
+seu_all <- FindNeighbors(seu_all, dims = 1:14)
+
+# Step 3.ii.	Cluster on SNN graph using Louvain algorithm and resolution of 0.5
+seu_all <- FindClusters(
+  seu_all,
+  resolution = 0.5,
+  algorithm = 1
+)
+table(Idents(seu_all))
