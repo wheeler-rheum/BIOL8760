@@ -213,3 +213,12 @@ RA6_seurat <- NormalizeData(
   normalization.method = "LogNormalize",
   scale.factor = 10000
 )
+
+## Before Step 2: merge the individuals patients into one file
+objs <- list(RA1 = RA1_seurat, RA2 = RA2_seurat, RA4 = RA4_seurat,
+             RA5 = RA5_seurat, RA6 = RA6_seurat)
+for (d in names(objs)) objs[[d]]$donor <- d
+seu_all <- merge(objs[[1]], y = objs[-1], add.cell.ids = names(objs))
+seu_all[["RNA"]] <- JoinLayers(seu_all[["RNA"]])
+
+
