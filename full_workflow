@@ -14,6 +14,8 @@ library(SingleR)
 library(celldex)
 library(SummarizedExperiment)
 library(ggplot2)
+remotes::install_github("rpolicastro/scProportionTest")
+library(scProportionTest)
 
 ## Step 1.i. Data from each individual will be imported as a Seurat object
 
@@ -360,3 +362,34 @@ Myeloid  <- Myel_res$object
 
 table(t_cells$seurat_clusters, t_cells$singler_label)
 head(T_res$markers)
+
+## Step 8: Calculation and comparison of proportional differences in cell populations (against baseline sample)
+seu_all$sample_id <- paste(seu_all$donor, seu_all$timepoint, sep = "_")
+
+donors <- c("RA1", "RA2", "RA4", "RA5", "RA6")
+tps    <- c("wk3", "wk6", "wk12")
+
+run_pair <- function(d, tp) {
+  pt <- sc_utils(seu_all)
+  pt <- permutation_test(pt,
+                         cluster_identity = "SingleR_label",
+                         sample_1 = paste(d, "BL", sep = "_"),
+                         sample_2 = paste(d, tp, sep = "_"),
+                         sample_identity = "sample_id",
+                         n_permutations = 1000)
+  res <- as.data.frame(pt@results$permutation)   # adjust to the element name
+  res$donor <- d
+  res$timepoint <- tp
+  res
+}
+
+standardize <- function(x) {
+  colnames(x)[2] <- "prop_BL"
+  colnames(x)[3] <- "prop_tp"
+  x
+}
+
+results_list <- lapply(results_list, standardize)
+prop_results <- do.call(rbind, results_list)
+rownames(prop_results) <- NULL
+head(prop_results)
