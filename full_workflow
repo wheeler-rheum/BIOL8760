@@ -441,4 +441,4 @@ de_by_celltype <- function(obj, timepoints = c("wk3", "wk6", "wk12"),
 
 diff_express_t_cells <- de_by_celltype(t_cells)
 diff_express_b_cells <- de_by_celltype(b_cells)
-diff_express_myeloid_cells <- de_by_celltype(t_cells)
+diff_express_myeloid_cells <- de_by_celltype(myeloid)
