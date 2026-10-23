@@ -194,6 +194,10 @@ for (d in names(objs)) objs[[d]]$donor <- d
 seu_all <- merge(objs[[1]], y = objs[-1], add.cell.ids = names(objs))
 seu_all[["RNA"]] <- JoinLayers(seu_all[["RNA"]])
 
+saveRDS(seu_all, file = "seu_all.rds")
+gx_put("~/seu_all.rds")
+
+################## DO THESE STEPS IN GALAXY ###################
 ## Step 1.iii.	Normalization with a scale factor of 10,000
 seu_all <- NormalizeData(
   seu_all,
@@ -240,6 +244,7 @@ DimPlot(seu_all, reduction = "umap", label = TRUE)
 seu_all <- JoinLayers(seu_all)
 markers <- FindAllMarkers(seu_all)
 
+################ Go back to R ##################
 # Stage 5. Annotate clusters based on expression of top marker genes with Monaco immune reference dataset as reference
 # Download the Monaco immune reference from celldex
 monaco_ref <- MonacoImmuneData()
@@ -321,6 +326,9 @@ saveRDS(t_int, "t_cells_integrated.rds")
 saveRDS(b_int, "b_cells_integrated.rds")
 saveRDS(myeloid_int, "myeloid_integrated.rds")
 
+
+##########################
+We will try doing this
 ## Step 7: Repeat the clustering/annotation on the integrated subsets
 ref <- celldex::MonacoImmuneData()
 recluster_annotate <- function(obj, dims = 1:14, res = 0.5) {
