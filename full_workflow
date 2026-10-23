@@ -356,9 +356,9 @@ T_res   <- recluster_annotate(t_int)
 B_res   <- recluster_annotate(b_int)
 Myel_res <- recluster_annotate(myeloid_int)
 
-T_cells  <- T_res$object
-B_cells  <- B_res$object
-Myeloid  <- Myel_res$object
+t_cells  <- T_res$object
+b_cells  <- B_res$object
+myeloid  <- Myel_res$object
 
 table(t_cells$seurat_clusters, t_cells$singler_label)
 head(T_res$markers)
@@ -393,3 +393,43 @@ results_list <- lapply(results_list, standardize)
 prop_results <- do.call(rbind, results_list)
 rownames(prop_results) <- NULL
 head(prop_results)
+
+write.csv(prop_results, "prop_results.csv", row.names = FALSE)
+gx_put("~/prop_results.csv")
+
+## Step 9.	Differential expression analysis to compare RA baseline vs. follow-up time points within each cell type
+de_by_celltype <- function(obj, timepoints = c("wk3", "wk6", "wk12"),
+                           min_cells = 3) {
+  obj <- JoinLayers(obj)          # one data layer before testing
+  out <- list()
+
+  for (ct in sort(unique(na.omit(obj$singler_label)))) {
+    cells_ct <- subset(obj, subset = singler_label == ct)
+    Idents(cells_ct) <- "timepoint"
+
+    for (tp in timepoints) {
+      n_tp <- sum(cells_ct$timepoint == tp)
+      n_bl <- sum(cells_ct$timepoint == "BL")
+      if (n_tp < min_cells || n_bl < min_cells) next   # too few cells to test
+
+      m <- FindMarkers(
+        cells_ct,
+        ident.1         = tp,
+        ident.2         = "BL",
+        test.use        = "LR",
+        latent.vars     = "donor",
+        logfc.threshold = 0          # keep all genes; filter below
+      )
+      m$gene      <- rownames(m)
+      m$cell_type <- ct
+      m$timepoint <- tp
+      out[[paste(ct, tp, sep = "_")]] <- m
+    }
+  }
+
+  bind_rows(out)
+}
+
+diff_express_t_cells <- de_by_celltype(t_cells)
+diff_express_b_cells <- de_by_celltype(b_cells)
+diff_express_myeloid_cells <- de_by_celltype(t_cells)
