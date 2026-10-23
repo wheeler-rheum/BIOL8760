@@ -320,3 +320,34 @@ myeloid_int <- integrate_subset(myeloid, batch_col = "orig.ident")
 saveRDS(t_int, "t_cells_integrated.rds")
 saveRDS(b_int, "b_cells_integrated.rds")
 saveRDS(myeloid_int, "myeloid_integrated.rds")
+
+## Step 7: Repeat the clustering/annotation on the integrated subsets
+ref <- celldex::MonacoImmuneData()
+recluster_annotate <- function(obj, dims = 1:14, res = 0.5) {
+  obj <- NormalizeData(obj, normalization.method = "LogNormalize", scale.factor = 10000)
+  obj <- FindNeighbors(obj, reduction = "integrated.cca", dims = dims)
+  obj <- FindClusters(obj, resolution = res, algorithm = 1)
+  obj <- RunUMAP(obj, reduction = "integrated.cca", dims = dims)
+  obj <- JoinLayers(obj)
+  markers <- FindAllMarkers(obj, only.pos = TRUE)
+  pred <- SingleR(
+    test    = GetAssayData(obj, assay = "RNA", layer = "data"),
+    ref     = ref,
+    labels  = ref$label.main,
+    clusters = obj$seurat_clusters
+  )
+  cluster_labels <- setNames(pred$labels, rownames(pred))
+  obj$singler_label <- unname(cluster_labels[as.character(obj$seurat_clusters)])
+  list(object = obj, markers = markers, singler = pred)
+}
+
+T_res   <- recluster_annotate(T_cells)
+B_res   <- recluster_annotate(B_cells)
+Myel_res <- recluster_annotate(Myeloid)
+
+T_cells  <- T_res$object
+B_cells  <- B_res$object
+Myeloid  <- Myel_res$object
+
+table(T_cells$seurat_clusters, T_cells$singler_label)
+head(T_res$markers)
