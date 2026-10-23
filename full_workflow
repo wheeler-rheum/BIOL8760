@@ -422,6 +422,7 @@ de_by_celltype <- function(obj, timepoints = c("wk3", "wk6", "wk12"),
 
       m <- FindMarkers(
         cells_ct,
+        features = VariableFeatures(obj),
         ident.1         = tp,
         ident.2         = "BL",
         test.use        = "LR",
