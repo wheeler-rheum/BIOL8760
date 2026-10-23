@@ -8,6 +8,7 @@ install.packages('devtools')
 devtools::install_github('immunogenomics/presto')
 install.packages("curl")
 BiocManager::install(c("SingleR", "celldex"))
+BiocManager::install("scrapper")
 library(curl)
 library(SingleR)
 library(celldex)
@@ -329,9 +330,6 @@ saveRDS(t_int, "t_cells_integrated.rds")
 saveRDS(b_int, "b_cells_integrated.rds")
 saveRDS(myeloid_int, "myeloid_integrated.rds")
 
-
-##########################
-We will try doing this
 ## Step 7: Repeat the clustering/annotation on the integrated subsets
 ref <- celldex::MonacoImmuneData()
 recluster_annotate <- function(obj, dims = 1:14, res = 0.5) {
@@ -352,13 +350,13 @@ recluster_annotate <- function(obj, dims = 1:14, res = 0.5) {
   list(object = obj, markers = markers, singler = pred)
 }
 
-T_res   <- recluster_annotate(T_cells)
-B_res   <- recluster_annotate(B_cells)
-Myel_res <- recluster_annotate(Myeloid)
+T_res   <- recluster_annotate(t_int)
+B_res   <- recluster_annotate(b_int)
+Myel_res <- recluster_annotate(myeloid_int)
 
 T_cells  <- T_res$object
 B_cells  <- B_res$object
 Myeloid  <- Myel_res$object
 
-table(T_cells$seurat_clusters, T_cells$singler_label)
+table(t_cells$seurat_clusters, t_cells$singler_label)
 head(T_res$markers)
