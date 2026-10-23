@@ -383,6 +383,14 @@ run_pair <- function(d, tp) {
   res
 }
 
+
+results_list <- list()
+for (d in donors) {
+  for (tp in tps) {
+    results_list[[paste(d, tp, sep = "_")]] <- run_pair(d, tp)
+  }
+}
+
 standardize <- function(x) {
   colnames(x)[2] <- "prop_BL"
   colnames(x)[3] <- "prop_tp"
